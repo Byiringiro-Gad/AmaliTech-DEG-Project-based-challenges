@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
 
-
 # What the client sends when making a payment
 class PaymentRequest(BaseModel):
     amount: float = Field(..., gt=0)        # must be a number greater than 0
