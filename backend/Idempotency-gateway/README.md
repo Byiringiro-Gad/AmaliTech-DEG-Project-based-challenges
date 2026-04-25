@@ -1,6 +1,5 @@
 # Idempotency-Gateway (The "Pay-Once" Protocol)
 
-> **Built by:** _(Your Name)_
 > **Stack:** Python, FastAPI
 > **Storage:** In-memory dictionary (no database needed)
 
@@ -51,7 +50,7 @@ sequenceDiagram
 
 ## 3. Setup Instructions
 
-### What you need
+### what needed before it runs
 - Python 3.11 or higher
 - pip
 
@@ -62,7 +61,7 @@ sequenceDiagram
 git clone <your-repo-url>
 cd backend/Idempotency-gateway
 
-# 2. Create a virtual environment (keeps dependencies clean)
+# 2. Create a virtual environment to keeps dependencies clean
 python -m venv venv
 
 # Windows
@@ -80,7 +79,7 @@ uvicorn app.main:app --reload
 
 The server runs at **http://localhost:8000**
 
-You can test all endpoints visually at **http://localhost:8000/docs** — no Postman needed.
+All endpoints can be tested visually at **http://localhost:8000/docs**.
 
 ---
 
@@ -151,7 +150,7 @@ Just checks if the server is running.
 
 ---
 
-## 5. Try It Yourself (curl examples)
+## 5. Curl examples
 
 **Send a payment for the first time:**
 ```bash
@@ -161,7 +160,7 @@ curl -X POST http://localhost:8000/process-payment \
   -d '{"amount": 100, "currency": "GHS"}'
 ```
 
-**Send the same request again (should come back instantly with same result):**
+**Send the same request again (should come back immediately with same result):**
 ```bash
 curl -X POST http://localhost:8000/process-payment \
   -H "Content-Type: application/json" \
@@ -179,8 +178,6 @@ curl -X POST http://localhost:8000/process-payment \
 
 ---
 
-## 6. Design Decisions
-
 ### Why FastAPI?
 
 I chose FastAPI because it supports async Python out of the box, which I needed for handling two requests arriving at the same time. It also generates a live testing page at `/docs` automatically, which made development easier.
@@ -193,19 +190,11 @@ If two identical requests arrive at the exact same moment, only one should proce
 
 When a key comes in, I create a hash (a short fingerprint) of the request body using SHA-256. If the same key comes in again with a different body, the hashes won't match and the request is rejected. I sort the fields before hashing so the order doesn't matter.
 
-### Why a plain dictionary and not a database?
-
-The challenge said any storage is fine. A Python dictionary is simple, fast, and needs no setup. In a real system I'd use Redis, which has built-in expiry and handles multiple servers.
-
----
-
-## 7. Developer's Choice — Key Expiry
+## Key Expiry
 
 **What I added:** Idempotency keys expire after 24 hours.
 
 **Why I added it:** Without expiry, the dictionary grows forever. Old keys from months ago would still be sitting in memory doing nothing. More importantly, a client should be able to reuse a key the next day for a completely new payment — and that would fail if the old result is still saved.
-
-I looked at how Stripe handles this and they also expire keys after 24 hours, so I followed the same approach.
 
 **How it works:** Every saved record stores the time it was created. When a key is looked up, the code checks if it's older than 24 hours. If it is, the record is deleted and the key is treated as brand new.
 
