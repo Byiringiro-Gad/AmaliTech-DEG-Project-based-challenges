@@ -1,13 +1,13 @@
 # Idempotency-Gateway (The "Pay-Once" Protocol)
 
 > **Stack:** Python, FastAPI
-> **Storage:** In-memory dictionary (no database needed)
+> **Storage:** In-memory dictionary
 
 ---
 
 ## 1. What This Project Does
 
-When a customer clicks "Pay", sometimes the internet is slow and the request gets sent more than once. Without any protection, the server processes all of them — and the customer gets charged twice.
+When a customer clicks "Pay", sometimes the internet is slow and the request gets sent more than once. Without any protection, the server processes all of them, and the customer gets charged twice.
 
 This API fixes that. Every payment request comes with a unique ticket number called an `Idempotency-Key`. The server remembers every key it has seen. If the same key comes in again, it just returns the saved result instead of charging again.
 
@@ -50,7 +50,6 @@ sequenceDiagram
 
 ## 3. Setup Instructions
 
-### what needed before it runs
 - Python 3.11 or higher
 - pip
 
@@ -58,17 +57,12 @@ sequenceDiagram
 
 ```bash
 # 1. Clone the repo and go into the project folder
-git clone <your-repo-url>
-cd backend/Idempotency-gateway
 
-# 2. Create a virtual environment to keeps dependencies clean
+# 2. Create a virtual environment
 python -m venv venv
 
 # Windows
 venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
 
 # 3. Install the required packages
 pip install -r requirements.txt
@@ -105,8 +99,8 @@ This is the main endpoint. It takes a payment and an `Idempotency-Key` header.
 }
 ```
 
-- `amount` — must be a number greater than 0
-- `currency` — must be exactly 3 letters (e.g. GHS, USD, RWF)
+- `amount`: must be a number greater than 0
+- `currency`: must be exactly 3 letters (e.g. GHS, USD, RWF)
 
 **Possible Responses**
 
@@ -194,7 +188,7 @@ When a key comes in, I create a hash (a short fingerprint) of the request body u
 
 **What I added:** Idempotency keys expire after 24 hours.
 
-**Why I added it:** Without expiry, the dictionary grows forever. Old keys from months ago would still be sitting in memory doing nothing. More importantly, a client should be able to reuse a key the next day for a completely new payment — and that would fail if the old result is still saved.
+**Why I added it:** Without expiry, the dictionary grows forever. Old keys from months ago would still be sitting in memory doing nothing. More importantly, a client should be able to reuse a key the next day for a completely new payment, and that would fail if the old result is still saved.
 
 **How it works:** Every saved record stores the time it was created. When a key is looked up, the code checks if it's older than 24 hours. If it is, the record is deleted and the key is treated as brand new.
 
