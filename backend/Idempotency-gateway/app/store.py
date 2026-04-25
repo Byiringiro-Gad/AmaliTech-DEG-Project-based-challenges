@@ -4,23 +4,21 @@ import json
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
-# Keys expire after 24 hours (same as how Stripe handles it)
+# Keys expire after 24 hours
 KEY_TTL_HOURS = 24
 
 
 # Holds the saved result for one payment
 class StoredRecord:
     def __init__(self, request_hash: str, response_body: dict, status_code: int):
-        self.request_hash = request_hash    # fingerprint of the request body
-        self.response_body = response_body  # the response we sent back
+        self.request_hash = request_hash 
+        self.response_body = response_body
         self.status_code = status_code
         self.created_at = datetime.now(timezone.utc)
-        self.is_processing = False          # True while the payment is still running
+        self.is_processing = False
 
 
 class IdempotencyStore:
-    # _store saves payment results by idempotency key
-    # _locks gives each key its own lock so only one request runs at a time per key
 
     def __init__(self):
         self._store: dict[str, StoredRecord] = {}
@@ -33,7 +31,6 @@ class IdempotencyStore:
 
     @staticmethod
     def hash_request(body: dict) -> str:
-        # Sort keys first so field order doesn't affect the fingerprint
         serialized = json.dumps(body, sort_keys=True)
         return hashlib.sha256(serialized.encode()).hexdigest()
 
@@ -81,5 +78,4 @@ class IdempotencyStore:
             lock.release()
 
 
-# One shared store instance used by the whole app
 idempotency_store = IdempotencyStore()
